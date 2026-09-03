@@ -1,0 +1,21 @@
+{
+  "services": [
+    {
+      "type": "web",
+      "name": "healsync-backend",
+      "env": "java",
+      "buildCommand": "cd backend && ./mvnw clean compile",
+      "startCommand": "cd backend && ./mvnw spring-boot:run",
+      "envVars": {
+        "PORT": "8081"
+      }
+    },
+    {
+      "type": "web",
+      "name": "healsync-frontend",
+      "env": "static",
+      "buildCommand": "cd frontend && npm install && npm run build",
+      "staticPublishPath": "frontend/dist"
+    }
+  ]
+}
