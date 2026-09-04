@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
-import { Bar, Pie, Line } from 'react-chartjs-2';
+import { Bar, Pie } from 'react-chartjs-2';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import * as XLSX from 'xlsx';
@@ -9,6 +9,10 @@ import 'jspdf-autotable';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
+// ==================== HARDCODED FOR RENDER ====================
+const API_URL = 'https://healsync-clinic-1.onrender.com';
+console.log('🔗 API_URL:', API_URL);
+// ===============================================================
 const theme = {
   primary: '#2a9d8f',
   primaryLight: '#e8f5e9',
@@ -103,7 +107,8 @@ function App() {
 
   // ======== API HELPER ========
   const apiCall = (url, options = {}) => {
-    return fetch(url, {
+    console.log(`📡 Calling: ${API_URL}${url}`);
+    return fetch(`${API_URL}${url}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
@@ -116,7 +121,7 @@ function App() {
   // ======== FETCH FUNCTIONS ========
   const fetchDoctors = () => {
     setLoadingDoctors(true);
-    apiCall('http://localhost:8081/api/doctors')
+    apiCall('/api/doctors')
       .then(res => res.json())
       .then(data => {
         setDoctors(Array.isArray(data) ? data : []);
@@ -127,7 +132,7 @@ function App() {
 
   const fetchPatients = () => {
     setLoadingPatients(true);
-    apiCall('http://localhost:8081/api/patients')
+    apiCall('/api/patients')
       .then(res => res.json())
       .then(data => {
         setPatients(Array.isArray(data) ? data : []);
@@ -138,7 +143,7 @@ function App() {
 
   const fetchAppointments = () => {
     setLoadingAppointments(true);
-    apiCall('http://localhost:8081/api/appointments')
+    apiCall('/api/appointments')
       .then(res => res.json())
       .then(data => {
         setAppointments(Array.isArray(data) ? data : []);
@@ -151,7 +156,10 @@ function App() {
   const handleLogin = (e) => {
     e.preventDefault();
     setAuthError('');
-    fetch('http://localhost:8081/api/auth/login', {
+    
+    console.log('🔐 Logging in to:', `${API_URL}/api/auth/login`);
+    
+    fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
@@ -168,13 +176,19 @@ function App() {
         setPassword('');
         toast.success('🎉 Welcome back!');
       })
-      .catch(err => setAuthError(err.message));
+      .catch(err => {
+        console.error('❌ Login error:', err);
+        setAuthError('Connection error. Please try again.');
+      });
   };
 
   const handleRegister = (e) => {
     e.preventDefault();
     setAuthError('');
-    fetch('http://localhost:8081/api/auth/register', {
+    
+    console.log('📝 Registering to:', `${API_URL}/api/auth/register`);
+    
+    fetch(`${API_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
@@ -188,7 +202,10 @@ function App() {
         toast.success('✅ Registration successful! Please login.');
         handleLogin(e);
       })
-      .catch(err => setAuthError(err.message));
+      .catch(err => {
+        console.error('❌ Register error:', err);
+        setAuthError('Connection error. Please try again.');
+      });
   };
 
   const logout = () => {
@@ -213,7 +230,7 @@ function App() {
   const handleDoctorSubmit = (e) => {
     e.preventDefault();
     const data = { name: docName, specialization: docSpecialization, email: docEmail, phone: docPhone, photoBase64: docPhoto || null };
-    const url = isEditingDoc ? `http://localhost:8081/api/doctors/${editDocId}` : 'http://localhost:8081/api/doctors';
+    const url = isEditingDoc ? `/api/doctors/${editDocId}` : '/api/doctors';
     const method = isEditingDoc ? 'PUT' : 'POST';
     apiCall(url, { method, body: JSON.stringify(data) })
       .then(res => res.json())
@@ -227,7 +244,7 @@ function App() {
 
   const handleDeleteDoctor = (id) => {
     if (!window.confirm('Remove this doctor?')) return;
-    apiCall(`http://localhost:8081/api/doctors/${id}`, { method: 'DELETE' })
+    apiCall(`/api/doctors/${id}`, { method: 'DELETE' })
       .then(() => {
         setDoctors(doctors.filter(d => d.id !== id));
         showToast('🗑️ Doctor removed successfully');
@@ -260,7 +277,7 @@ function App() {
   const handlePatientSubmit = (e) => {
     e.preventDefault();
     const data = { name: patName, email: patEmail, phone: patPhone, dateOfBirth: patDob, gender: patGender, address: patAddress, photoBase64: patPhoto || null };
-    const url = isEditingPat ? `http://localhost:8081/api/patients/${editPatId}` : 'http://localhost:8081/api/patients';
+    const url = isEditingPat ? `/api/patients/${editPatId}` : '/api/patients';
     const method = isEditingPat ? 'PUT' : 'POST';
     apiCall(url, { method, body: JSON.stringify(data) })
       .then(res => res.json())
@@ -274,7 +291,7 @@ function App() {
 
   const handleDeletePatient = (id) => {
     if (!window.confirm('Remove this patient?')) return;
-    apiCall(`http://localhost:8081/api/patients/${id}`, { method: 'DELETE' })
+    apiCall(`/api/patients/${id}`, { method: 'DELETE' })
       .then(() => {
         setPatients(patients.filter(p => p.id !== id));
         showToast('🗑️ Patient removed successfully');
@@ -326,7 +343,7 @@ function App() {
       status: apptStatus
     };
 
-    const url = isEditingAppt ? `http://localhost:8081/api/appointments/${editApptId}` : 'http://localhost:8081/api/appointments';
+    const url = isEditingAppt ? `/api/appointments/${editApptId}` : '/api/appointments';
     const method = isEditingAppt ? 'PUT' : 'POST';
 
     apiCall(url, { method, body: JSON.stringify(data) })
@@ -348,7 +365,7 @@ function App() {
 
   const handleDeleteAppointment = (id) => {
     if (!window.confirm('Cancel this appointment?')) return;
-    apiCall(`http://localhost:8081/api/appointments/${id}`, { method: 'DELETE' })
+    apiCall(`/api/appointments/${id}`, { method: 'DELETE' })
       .then(() => {
         setAppointments(appointments.filter(a => a.id !== id));
         showToast('🗑️ Appointment cancelled');
@@ -381,7 +398,7 @@ function App() {
   };
 
   // ======== CHATBOT FUNCTIONS ========
-  const sendChatMessage = async (e) => {
+  const sendChatMessage = (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
 
@@ -390,33 +407,47 @@ function App() {
     setChatInput('');
     setIsChatLoading(true);
 
-    try {
-      const response = await fetch('http://localhost:8081/api/chatbot/consult', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ message: userMessage })
-      });
-      
-      const data = await response.json();
-      
+    setTimeout(() => {
+      const lowerMsg = userMessage.toLowerCase();
+      let response = "🤖 I'm your medical assistant. Please describe your symptoms clearly.\n\n📋 Examples:\n• 'I have chest pain'\n• 'I have a skin rash'\n• 'My child has a fever'\n• 'My knee is hurting'";
+      let doctorId = null;
+      let doctorName = null;
+
+      if (lowerMsg.includes('chest') || lowerMsg.includes('heart') || lowerMsg.includes('bp')) {
+        response = "🩺 Based on your symptoms, I recommend consulting a **Cardiologist**.\n\n👨‍⚕️ Dr. Sarah Wilson is available.\n📧 Email: sarah@clinic.com\n📞 Phone: 555-0101\n\nWould you like to book an appointment?";
+        doctorId = 1;
+        doctorName = "Dr. Sarah Wilson";
+      } else if (lowerMsg.includes('rash') || lowerMsg.includes('skin') || lowerMsg.includes('acne')) {
+        response = "🩺 Based on your symptoms, I recommend consulting a **Dermatologist**.\n\n👨‍⚕️ Dr. James Patel is available.\n📧 Email: james@clinic.com\n📞 Phone: 555-0102\n\nWould you like to book an appointment?";
+        doctorId = 2;
+        doctorName = "Dr. James Patel";
+      } else if (lowerMsg.includes('fever') || lowerMsg.includes('cough') || lowerMsg.includes('cold') || lowerMsg.includes('child')) {
+        response = "🩺 Based on your symptoms, I recommend consulting a **Pediatrician**.\n\n👨‍⚕️ Dr. Emily Chen is available.\n📧 Email: emily@clinic.com\n📞 Phone: 555-0105\n\nWould you like to book an appointment?";
+        doctorId = 3;
+        doctorName = "Dr. Emily Chen";
+      } else if (lowerMsg.includes('bone') || lowerMsg.includes('knee') || lowerMsg.includes('back')) {
+        response = "🩺 Based on your symptoms, I recommend consulting an **Orthopedic** specialist.\n\n👨‍⚕️ Dr. Michael Lee is available.\n📧 Email: michael@clinic.com\n📞 Phone: 555-0108\n\nWould you like to book an appointment?";
+        doctorId = 4;
+        doctorName = "Dr. Michael Lee";
+      } else if (lowerMsg.includes('eye') || lowerMsg.includes('vision')) {
+        response = "🩺 Based on your symptoms, I recommend consulting an **Ophthalmologist**.\n\n👨‍⚕️ Dr. Lisa Park is available.\n📧 Email: lisa@clinic.com\n📞 Phone: 555-0109\n\nWould you like to book an appointment?";
+        doctorId = 5;
+        doctorName = "Dr. Lisa Park";
+      } else if (lowerMsg.includes('head') || lowerMsg.includes('migraine') || lowerMsg.includes('dizzy')) {
+        response = "🩺 Based on your symptoms, I recommend consulting a **Neurologist**.\n\n👨‍⚕️ Dr. David Kim is available.\n📧 Email: david@clinic.com\n📞 Phone: 555-0110\n\nWould you like to book an appointment?";
+        doctorId = 6;
+        doctorName = "Dr. David Kim";
+      }
+
       setChatMessages(prev => [...prev, {
         id: Date.now() + 1,
         sender: 'bot',
-        text: data.message,
-        doctorId: data.doctorId,
-        doctorName: data.doctorName
+        text: response,
+        doctorId: doctorId,
+        doctorName: doctorName
       }]);
-    } catch (error) {
-      setChatMessages(prev => [...prev, {
-        id: Date.now() + 1,
-        sender: 'bot',
-        text: "❌ Sorry, I'm having trouble connecting. Please try again."
-      }]);
-    }
-    setIsChatLoading(false);
+      setIsChatLoading(false);
+    }, 1000);
   };
 
   // ======== EXPORT FUNCTIONS ========
@@ -529,7 +560,7 @@ function App() {
 
           {authError && (
             <div style={{ background: '#fde8e4', color: theme.danger, padding: '10px', borderRadius: '12px', fontSize: '14px', marginBottom: '20px' }}>
-              {authError}
+              ❌ {authError}
             </div>
           )}
 
@@ -606,7 +637,6 @@ function App() {
       <ToastContainer position="top-right" autoClose={3000} />
       
       <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-        {/* HEADER */}
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           background: theme.cardBg, padding: '15px 25px',
@@ -673,7 +703,6 @@ function App() {
           </div>
         </div>
 
-        {/* STATS */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
@@ -694,7 +723,6 @@ function App() {
           </div>
         </div>
 
-        {/* CHARTS SECTION */}
         {showCharts && (
           <div style={{
             display: 'grid',
@@ -713,7 +741,6 @@ function App() {
           </div>
         )}
 
-        {/* TABS */}
         <div style={{
           display: 'flex',
           gap: '10px',
@@ -743,9 +770,6 @@ function App() {
           ))}
         </div>
 
-        {/* ======== TAB CONTENT ======== */}
-        
-        {/* --- DOCTORS --- */}
         {activeTab === 'doctors' && (
           <div>
             <div style={{
@@ -840,7 +864,6 @@ function App() {
           </div>
         )}
 
-        {/* --- PATIENTS --- */}
         {activeTab === 'patients' && (
           <div>
             <div style={{
@@ -948,7 +971,6 @@ function App() {
           </div>
         )}
 
-        {/* --- APPOINTMENTS --- */}
         {activeTab === 'appointments' && (
           <div>
             <div style={{
@@ -1142,7 +1164,6 @@ function App() {
             flexDirection: 'column',
             border: '1px solid #e2e8f0'
           }}>
-            {/* Chat Header */}
             <div style={{
               background: theme.primary,
               color: 'white',
@@ -1169,7 +1190,6 @@ function App() {
               </button>
             </div>
 
-            {/* Chat Messages */}
             <div style={{
               flex: 1,
               padding: '15px',
@@ -1228,7 +1248,6 @@ function App() {
               )}
             </div>
 
-            {/* Chat Input */}
             <form onSubmit={sendChatMessage} style={{
               display: 'flex',
               padding: '12px',
