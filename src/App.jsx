@@ -8,7 +8,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
-
+const API_URL = 'https://healsync-backend.onrender.com';
 const theme = {
   primary: '#2a9d8f',
   primaryLight: '#e8f5e9',
