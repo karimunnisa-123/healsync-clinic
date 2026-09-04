@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: healsync-backend
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    rootDir: backend
+    envVars:
+      - key: PORT
+        value: 8081
+
+  - type: web
+    name: healsync-frontend
+    env: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
